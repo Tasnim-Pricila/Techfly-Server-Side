@@ -20,6 +20,7 @@ async function run() {
     try {
         await client.connect();
         const partsCollection = client.db('techfly').collection('parts');
+        const purchaseCollection = client.db('techfly').collection('purchase');
 
         // GET PARTS 
         app.get('/parts', async (req, res) => {
@@ -30,8 +31,15 @@ async function run() {
         // GET PARTS BY ID 
         app.get('/parts/:id', async (req, res) => {
             const id = req.params.id;
-            const query = { _id : ObjectId(id)}
-            const result = await partsCollection.findOne(query)
+            const query = { _id : ObjectId(id)};
+            const result = await partsCollection.findOne(query);
+            res.send(result);
+        })
+
+        // POST PURCHASING ITEMS 
+        app.post('/purchase', async (req,res) => {
+            const purchase = req.body;
+            const result = await purchaseCollection.insertOne(purchase);
             res.send(result);
         })
     }

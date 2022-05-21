@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -21,8 +21,17 @@ async function run() {
         await client.connect();
         const partsCollection = client.db('techfly').collection('parts');
 
+        // GET PARTS 
         app.get('/parts', async (req, res) => {
             const result = await partsCollection.find().toArray();
+            res.send(result);
+        })
+
+        // GET PARTS BY ID 
+        app.get('/parts/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id : ObjectId(id)}
+            const result = await partsCollection.findOne(query)
             res.send(result);
         })
     }

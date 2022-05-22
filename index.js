@@ -35,7 +35,7 @@ async function run() {
         })
 
         // GET PARTS BY ID 
-        app.get('/parts/:id', async (req, res) => {
+        app.get('/parts/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await partsCollection.findOne(query);
@@ -43,14 +43,14 @@ async function run() {
         })
 
         // POST PARTS 
-        app.post('/parts', async (req, res) => {
+        app.post('/parts',verifyJWT, async (req, res) => {
             const product = req.body;
             const result = await partsCollection.insertOne(product);
             res.send(result);
         })
 
         // DELETE PARTS 
-        app.delete('/parts/:id', async (req, res) => {
+        app.delete('/parts/:id',verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) }
             const result = await partsCollection.deleteOne(query);
@@ -65,7 +65,7 @@ async function run() {
         })
 
         // GET PURCHASE BY EMAIL 
-        app.get('/purchase', async (req, res) => {
+        app.get('/purchase',verifyJWT, async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
             const result = await purchaseCollection.find(query).toArray();
@@ -73,7 +73,7 @@ async function run() {
         })
 
         // GET PURCHASE BY ID 
-        app.get('/purchase/:id', async (req, res) => {
+        app.get('/purchase/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await purchaseCollection.findOne(query);
@@ -81,7 +81,7 @@ async function run() {
         })
 
         // Update purchase 
-        app.patch('/purchase/:id', async (req, res) => {
+        app.patch('/purchase/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const payment = req.body;
             const query = { _id: ObjectId(id) };
@@ -104,7 +104,7 @@ async function run() {
         })
 
         // Payment 
-        app.post('/create-payment-intent', async (req, res) => {
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const order = req.body;
             const price = order.price;
             const amount = price * 100;
@@ -112,7 +112,6 @@ async function run() {
                 amount: amount,
                 currency: "usd",
                 payment_method_types : ['card']
-
             });
             res.send({clientSecret: paymentIntent.client_secret});
         });
@@ -136,6 +135,20 @@ async function run() {
     }
     finally {
 
+    }
+    function verifyJWT(req, res, next) {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).send({message:"Unauthorized Access"});
+        }
+        const token = authHeader.split(' ')[1];
+        jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
+            if (err) {
+                return res.status(403).send({message: "Forbidden Access"});
+            }
+            req.decoded = decoded;
+            next();
+        })   
     }
 }
 run().catch(console.dir);

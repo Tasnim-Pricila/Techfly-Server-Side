@@ -37,6 +37,13 @@ async function run() {
             res.send(result);
         })
 
+        // POST PARTS 
+        app.post('/parts', async (req, res) => {
+            const product = req.body;
+            const result = await partsCollection.insertOne(product);
+            res.send(result);
+        })
+
         // POST PURCHASING ITEMS 
         app.post('/purchase', async (req,res) => {
             const purchase = req.body;

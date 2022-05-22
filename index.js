@@ -77,6 +77,12 @@ async function run() {
             res.send(result);
         })
 
+        // GET PURCHASE 
+        app.get('/purchase',  async (req, res) => {
+            const result = await purchaseCollection.find().toArray();
+            res.send(result);
+        })
+
         // GET PURCHASE BY EMAIL 
         app.get('/purchase',verifyJWT, async (req, res) => {
             const email = req.query.email;
@@ -90,6 +96,13 @@ async function run() {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await purchaseCollection.findOne(query);
+            res.send(result);
+        })
+        // DELETE PURCHASE BY ID 
+        app.delete('/purchase/:id', verifyJWT, verifyAdmin, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await purchaseCollection.deleteOne(query);
             res.send(result);
         })
 

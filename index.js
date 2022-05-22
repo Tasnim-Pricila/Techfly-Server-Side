@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const stripe = require("stripe")(process.env.stripe_secret_key);
+const jwt = require('jsonwebtoken');
 
 require('dotenv').config();
 const app = express();
@@ -25,6 +26,7 @@ async function run() {
         const purchaseCollection = client.db('techfly').collection('purchase');
         const reviewCollection = client.db('techfly').collection('reviews');
         const paymentCollection = client.db('techfly').collection('payment');
+        const userCollection = client.db('techfly').collection('users');
 
         // GET PARTS 
         app.get('/parts', async (req, res) => {
@@ -114,6 +116,23 @@ async function run() {
             });
             res.send({clientSecret: paymentIntent.client_secret});
         });
+
+        // Upsert User 
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const user = req.body;
+            const options = { upsert: true };
+            const updatedUser = {
+                $set: user
+            }
+            const result = await userCollection.updateOne(filter, updatedUser, options);
+            const accessToken = jwt.sign(filter, process.env.ACCESS_TOKEN,
+                {
+                    expiresIn: '1d'
+                });
+            res.send({result, accessToken});
+        })
     }
     finally {
 

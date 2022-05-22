@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require("stripe")(process.env.stripe_secret_key);
+
 require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -22,6 +24,7 @@ async function run() {
         const partsCollection = client.db('techfly').collection('parts');
         const purchaseCollection = client.db('techfly').collection('purchase');
         const reviewCollection = client.db('techfly').collection('reviews');
+        const paymentCollection = client.db('techfly').collection('payment');
 
         // GET PARTS 
         app.get('/parts', async (req, res) => {
@@ -32,7 +35,7 @@ async function run() {
         // GET PARTS BY ID 
         app.get('/parts/:id', async (req, res) => {
             const id = req.params.id;
-            const query = { _id : ObjectId(id)};
+            const query = { _id: ObjectId(id) };
             const result = await partsCollection.findOne(query);
             res.send(result);
         })
@@ -45,7 +48,7 @@ async function run() {
         })
 
         // DELETE PARTS 
-        app.delete('/parts/:id', async(req, res) => {
+        app.delete('/parts/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) }
             const result = await partsCollection.deleteOne(query);
@@ -53,7 +56,7 @@ async function run() {
         })
 
         // POST PURCHASING ITEMS 
-        app.post('/purchase', async (req,res) => {
+        app.post('/purchase', async (req, res) => {
             const purchase = req.body;
             const result = await purchaseCollection.insertOne(purchase);
             res.send(result);
@@ -69,19 +72,48 @@ async function run() {
 
         // GET PURCHASE BY ID 
         app.get('/purchase/:id', async (req, res) => {
-            const id = req.query.id;
+            const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await purchaseCollection.findOne(query);
             res.send(result);
         })
 
+        // Update purchase 
+        app.patch('/purchase/:id', async (req, res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const query = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionID: payment.transactionId
+                }
+            }
+            const updatePurchase = await purchaseCollection.updateOne(query, updatedDoc);
+            const result = await paymentCollection.insertOne(payment)
+            res.send(result)
+        })
 
         // POST REVIEWS
-        app.post('/review', async (req,res) => {
+        app.post('/review', async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
             res.send(result);
         })
+
+        // Payment 
+        app.post('/create-payment-intent', async (req, res) => {
+            const order = req.body;
+            const price = order.price;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: "usd",
+                payment_method_types : ['card']
+
+            });
+            res.send({clientSecret: paymentIntent.client_secret});
+        });
     }
     finally {
 

@@ -59,6 +59,23 @@ async function run() {
             res.send(result);
         })
 
+        // GET PURCHASE BY EMAIL 
+        app.get('/purchase', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const result = await purchaseCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        // GET PURCHASE BY ID 
+        app.get('/purchase/:id', async (req, res) => {
+            const id = req.query.id;
+            const query = { _id: ObjectId(id) };
+            const result = await purchaseCollection.findOne(query);
+            res.send(result);
+        })
+
+
         // POST REVIEWS
         app.post('/review', async (req,res) => {
             const review = req.body;

@@ -28,6 +28,19 @@ async function run() {
         const paymentCollection = client.db('techfly').collection('payment');
         const userCollection = client.db('techfly').collection('users');
 
+        // Verify Admin middleware 
+        const verifyAdmin = async (req, res, next) => {
+            const requesterEmail = req.decoded.email;
+            const query = { email: requesterEmail}
+            const requester = await userCollection.findOne(query);
+            if (requester.role === 'admin') {
+                next();
+            }
+            else {
+                res.status(403).send({ message: 'Forbidden Access' });
+            }
+        }
+
         // GET PARTS 
         app.get('/parts', async (req, res) => {
             const result = await partsCollection.find().toArray();
@@ -35,7 +48,7 @@ async function run() {
         })
 
         // GET PARTS BY ID 
-        app.get('/parts/:id', verifyJWT, async (req, res) => {
+        app.get('/parts/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const result = await partsCollection.findOne(query);
@@ -43,14 +56,14 @@ async function run() {
         })
 
         // POST PARTS 
-        app.post('/parts',verifyJWT, async (req, res) => {
+        app.post('/parts',verifyJWT, verifyAdmin, async (req, res) => {
             const product = req.body;
             const result = await partsCollection.insertOne(product);
             res.send(result);
         })
 
         // DELETE PARTS 
-        app.delete('/parts/:id',verifyJWT, async (req, res) => {
+        app.delete('/parts/:id',verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) }
             const result = await partsCollection.deleteOne(query);
@@ -97,7 +110,7 @@ async function run() {
         })
 
         // POST REVIEWS
-        app.post('/review', async (req, res) => {
+        app.post('/review', verifyJWT, async (req, res) => {
             const review = req.body;
             const result = await reviewCollection.insertOne(review);
             res.send(result);
@@ -134,7 +147,7 @@ async function run() {
         })
 
         // GET USER 
-        app.get('/users', verifyJWT, async (req, res) => {
+        app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray();
             res.send(result);
         })
@@ -164,6 +177,7 @@ async function run() {
     finally {
 
     }
+    // Verify Jwt Token 
     function verifyJWT(req, res, next) {
         const authHeader = req.headers.authorization;
         if (!authHeader) {

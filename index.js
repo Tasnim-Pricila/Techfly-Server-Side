@@ -21,6 +21,7 @@ async function run() {
         await client.connect();
         const partsCollection = client.db('techfly').collection('parts');
         const purchaseCollection = client.db('techfly').collection('purchase');
+        const reviewCollection = client.db('techfly').collection('reviews');
 
         // GET PARTS 
         app.get('/parts', async (req, res) => {
@@ -40,6 +41,13 @@ async function run() {
         app.post('/purchase', async (req,res) => {
             const purchase = req.body;
             const result = await purchaseCollection.insertOne(purchase);
+            res.send(result);
+        })
+
+        // POST REVIEWS
+        app.post('/review', async (req,res) => {
+            const review = req.body;
+            const result = await reviewCollection.insertOne(review);
             res.send(result);
         })
     }

@@ -1,12 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const stripe = require("stripe")(process.env.stripe_secret_key);
+
 const jwt = require('jsonwebtoken');
 
 require('dotenv').config();
 const app = express();
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 const port = process.env.PORT || 5000;
+
 
 app.use(cors());
 app.use(express.json());
@@ -15,7 +17,7 @@ app.get('/', (req, res) => {
     res.send("Techfly Server");
 })
 
-
+console.log(process.env.STRIPE_KEY)
 const uri = `mongodb+srv://${process.env.dbUser}:${process.env.dbPassword}@cluster0.8mwz4.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
@@ -91,6 +93,14 @@ async function run() {
             res.send(result);
         })
 
+        // GET PURCHASE BY EMAIL 
+        app.get('/user/:email', async(req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await userCollection.find(query).toArray();
+            res.send(result);
+        })
+
         // GET PURCHASE BY ID 
         app.get('/purchase/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
@@ -120,7 +130,7 @@ async function run() {
             }
             const updatePurchase = await purchaseCollection.updateOne(query, updatedDoc);
             const result = await paymentCollection.insertOne(payment)
-            res.send(result);
+            res.send(updatePurchase);
         })
 
         // POST REVIEWS
@@ -140,6 +150,7 @@ async function run() {
                 currency: "usd",
                 payment_method_types : ['card']
             });
+
             res.send({clientSecret: paymentIntent.client_secret});
         });
 
@@ -173,6 +184,7 @@ async function run() {
             const query = { email: email };
             const updatedDoc = {
                 $set: {
+                    name:user.name,
                     phone:user.phone, 
                     education: user.education,
                     city: user.city,

@@ -110,21 +110,6 @@ async function run() {
 
         })
 
-        // GET PURCHASE BY EMAIL 
-        // app.get('/purchase', verifyJWT, verifyAdmin, async (req, res) => {
-        //     const email = req.query.email;
-        //     const decodedEmail = req.decoded.email;
-        //     console.log(decodedEmail);
-        //     if (email === decodedEmail) {
-        //         const query = { email: email };
-        //         const result = await purchaseCollection.find(query).toArray();
-        //        res.send(result);
-        //     }
-        //     else {
-        //        res.status(403).send({ message: 'forbidden access' });
-        //     }
-        // })
-
         // GET USER BY EMAIL 
         app.get('/user/:email', async (req, res) => {
             const email = req.params.email;
@@ -154,11 +139,13 @@ async function run() {
         app.patch('/purchase/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const payment = req.body;
+            const status = req.body;
             const query = { _id: ObjectId(id) };
             const updatedDoc = {
                 $set: {
                     paid: true,
-                    transactionID: payment.transactionID
+                    transactionID: payment.transactionID,
+                    status: payment.status || status.status
                 }
             }
             const updatePurchase = await purchaseCollection.updateOne(query, updatedDoc);

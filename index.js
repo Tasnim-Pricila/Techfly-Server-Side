@@ -72,7 +72,7 @@ async function run() {
         })
 
         // POST PURCHASING ITEMS 
-        app.post('/purchase', async (req, res) => {
+        app.post('/purchase', verifyJWT, async (req, res) => {
             const purchase = req.body;
             const result = await purchaseCollection.insertOne(purchase);
             res.send(result);
@@ -110,14 +110,6 @@ async function run() {
 
         })
 
-        // GET USER BY EMAIL 
-        app.get('/user/:email', async (req, res) => {
-            const email = req.params.email;
-            const query = { email: email };
-            const result = await userCollection.find(query).toArray();
-            res.send(result);
-        })
-
         // GET PURCHASE BY ID 
         app.get('/purchase/:id', async (req, res) => {
             const id = req.params.id;
@@ -125,7 +117,6 @@ async function run() {
             const result = await purchaseCollection.findOne(query);
             res.send(result);
         })
-
 
         // DELETE PURCHASE BY ID 
         app.delete('/purchase/:id', verifyJWT, async (req, res) => {
@@ -160,6 +151,12 @@ async function run() {
             res.send(result);
         })
 
+        // GET REVIEWS 
+        app.get('/reviews', async(req, res) => {
+            const result = await reviewCollection.find().toArray();
+            res.send(result);
+        })
+
         // Payment 
         app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const order = req.body;
@@ -173,6 +170,14 @@ async function run() {
 
             res.send({ clientSecret: paymentIntent.client_secret });
         });
+
+        // GET USER BY EMAIL 
+        app.get('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const result = await userCollection.find(query).toArray();
+            res.send(result);
+        })
 
         // Upsert User 
         app.put('/user/:email', async (req, res) => {
@@ -217,9 +222,8 @@ async function run() {
             res.send(result)
         })
 
-
         // MAKE ADMIN 
-        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const updatedUser = {
@@ -231,7 +235,7 @@ async function run() {
             res.send(result);
         })
 
-        // ONLY ADMIN CAN MAKE ANY USER ADMIN 
+        // Checking if a user is admin or not
         app.get('/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
@@ -240,6 +244,7 @@ async function run() {
             res.send({ admin: isAdmin });
         })
     }
+
     finally {
 
     }

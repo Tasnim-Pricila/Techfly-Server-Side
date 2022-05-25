@@ -79,35 +79,16 @@ async function run() {
         })
 
         // GET PURCHASE 
-        app.get('/purchase', async (req, res) => {
+        app.get('/purchase', verifyJWT, async (req, res) => {
             if (req.query.email) {
-                const authHeader = req.headers.authorization;
-                if (!authHeader) {
-                    return res.status(401).send({ message: "Unauthorized Access" });
-                }
-                const token = authHeader.split(' ')[1];
-                jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded) => {
-                    if (err) {
-                        return res.status(403).send({ message: "Forbidden Access" });
-                    }
-                    req.decoded = decoded;
-                })
-                const email = req.query.email;
-                const decodedEmail = req.decoded.email;
-                if (email === decodedEmail) {
-                    const query = { email: email };
-                    const result = await purchaseCollection.find(query).toArray();
-                    res.send(result);
-                }
-                else {
-                    res.status(403).send({ message: 'forbidden access' });
-                }
+                const query = { email: email };
+                const result = await purchaseCollection.find(query).toArray();
+                res.send(result);
             }
             else {
                 const filter = await purchaseCollection.find().toArray();
                 res.send(filter);
             }
-
         })
 
         // GET PURCHASE BY ID 
@@ -152,7 +133,7 @@ async function run() {
         })
 
         // GET REVIEWS 
-        app.get('/reviews', async(req, res) => {
+        app.get('/reviews', async (req, res) => {
             const result = await reviewCollection.find().toArray();
             res.send(result);
         })

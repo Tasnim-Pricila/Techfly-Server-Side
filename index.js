@@ -154,7 +154,7 @@ async function run() {
         });
 
         // GET USER BY EMAIL 
-        app.get('/user/:email', async (req, res) => {
+        app.get('/user/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
             const result = await userCollection.find(query).toArray();

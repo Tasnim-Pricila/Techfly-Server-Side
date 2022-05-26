@@ -81,6 +81,7 @@ async function run() {
         // GET PURCHASE 
         app.get('/purchase', verifyJWT, async (req, res) => {
             if (req.query.email) {
+                const email = req.query.email;
                 const query = { email: email };
                 const result = await purchaseCollection.find(query).toArray();
                 res.send(result);
